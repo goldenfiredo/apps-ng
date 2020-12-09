@@ -22,9 +22,6 @@ const TransferModal = ({ asset, bindings, setVisible }) => {
   };
 
   const assetId = asset?.id
-  console.log('assetId:', assetId)
-  //const assetIdHex = toHexString(assetId)
-  //console.log('assetId in hex:', assetIdHex)
   const assetSymbol = asset?.symbol || 'PHA'
 
   const addressInput = useInput('')
@@ -55,27 +52,19 @@ const TransferModal = ({ asset, bindings, setVisible }) => {
       setAddressError(true)
     }
 
+    let assetIdHex = undefined
+    if (assetId != undefined)
+      assetIdHex = toHexString(assetId)
+    
     if (pubkeyHex) {
       ;(async () => {
         const obj = asset
           ? {
             Transfer: {
-              id: '0188130000414341',
+              id: assetIdHex,
               dest: pubkeyHex,
               value: amount.toString()
             }
-            /*TransferXTokenToChain: {
-              x_currency_id: {
-                chain_id: {
-                  ParaChain: 5000,
-                },
-                currency_id: [65,67,65]
-              },
-              para_id: 5000,
-              dest_network: 'Any',
-              dest: pubkeyHex,
-              value: amount.toString()
-            }*/
           }
           : {
             Transfer: {
