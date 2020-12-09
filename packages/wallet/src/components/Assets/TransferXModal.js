@@ -19,12 +19,10 @@ const TransferXModal = ({ asset, bindings, setVisible }) => {
     return Array.from(byteArray, function(byte) {
       return ('0' + (byte & 0xFF).toString(16)).slice(-2);
     }).join('')
-  };
+  }
 
   const assetId = asset?.id
-  console.log('assetId:', assetId)
-  //const assetIdHex = toHexString(assetId)
-  //console.log('assetId in hex:', assetIdHex)
+  console.log('assetXId:', assetId)
   const assetSymbol = asset?.symbol || 'PHA'
 
   const addressInput = useInput('')
@@ -55,23 +53,35 @@ const TransferXModal = ({ asset, bindings, setVisible }) => {
       setAddressError(true)
     }
 
+    let assetIdHex = undefined
+    let para_id = 0
+    let currency_id = []
+    if (assetId != undefined) {
+      assetIdHex = toHexString(assetId)
+      if (assetIdHex.startsWith('01')) { //Parachain
+        const para_id_in_hex = assetIdHex.slice(8, 10) + assetIdHex.slice(6, 8) + assetIdHex.slice(4, 6) + assetIdHex.slice(2, 4) //u32
+        para_id = parseInt(para_id_in_hex, 16)
+        let index = 10;
+        while (index < assetIdHex.length) {
+          let token = assetIdHex.slice(index, index+2)
+          currency_id.push(parseInt(token, 16))
+          index += 2
+        }
+      }
+    }
+
     if (pubkeyHex) {
       ;(async () => {
         const obj = asset
           ? {
-            /*Transfer: {
-              id: '0188130000414341',
-              dest: pubkeyHex,
-              value: amount.toString()
-            }*/
             TransferXTokenToChain: {
               x_currency_id: {
                 chain_id: {
-                  ParaChain: 5000,
+                  ParaChain: para_id,
                 },
-                currency_id: [65,67,65]
+                currency_id: currency_id
               },
-              para_id: 5000,
+              para_id: para_id,
               dest_network: 'Any',
               dest: pubkeyHex,
               value: amount.toString()
@@ -83,7 +93,6 @@ const TransferXModal = ({ asset, bindings, setVisible }) => {
               value: amount.toString()
             }
           }
-        console.log(obj)
         const cipher = await encryptObj(ecdhChannel, obj)
         const apiCipher = toApi(cipher)
         setCommand(JSON.stringify({ Cipher: apiCipher }))
