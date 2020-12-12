@@ -355,28 +355,39 @@ const AssetItem = observer(({ itemIndex }) => {
 
   const { isXS } = useTheme()
 
+  const extractSymbolFromId = (token_id) => {
+    if (token_id.length <= 5) return '' //DOT?
+    let index = 5;
+    let symbol = ''
+    while (index < token_id.length) {
+      symbol += String.fromCharCode(token_id[index])
+      index++;
+    }
+
+    return symbol
+  }
+
   const item = walletRuntime.assets[itemIndex]
   const balance = useMemo(() => new BN(item.balance || "0"), [item.balance])
-  //console.log('balance:', balance)
   const ownerAddress = useMemo(() => hexToSs58('0x' + item.metadata.owner), [item.metadata.owner])
   const isOwner = useMemo(() => (ownerAddress === address), [ownerAddress,address])
   const decimal = useMemo(() => item.metadata.decimal, [item.metadata.decimal])
-  console.log('decimal:', decimal)
+  const symbol = useMemo(() => decimal > 0 ? item.metadata.symbol : extractSymbolFromId(item.metadata.id), [item.metadata.id])
   const transferModal = useModal()
   const transferxModal = useModal()
 
   if (!isOwner && balance.isZero() && !showInvalidAssets) { return null }
 
   return <>
-    <TransferModal asset={item.metadata} {...transferModal} />
-    <TransferXModal asset={item.metadata} {...transferxModal} />
+    <TransferModal assetSymbol = {item.metadata?symbol:'PHA'} asset={item.metadata} {...transferModal} />
+    <TransferXModal assetSymbol = {item.metadata?symbol:''} asset={item.metadata} {...transferxModal} />
     <AssetBlock>
       <LeftDecoration />
-      <Info balance={balance} symbol={item.metadata.symbol}>
+      <Info balance={balance} symbol={symbol}>
         {isXS && <AssetItemButtonGroup isOwner={isOwner} item={item} transferModal={transferModal} />}
       </Info>
-      {!isXS && <AssetItemButtonGroup name='Secret Transfer' isOwner={isOwner && decimal > 0} item={item} transferModal={transferModal} />}
-      {!isXS && decimal == 0 && <AssetItemButtonGroup name='Parachain Transfer' isOwner={isOwner && decimal > 0} item={item} transferModal={transferxModal} />}
+      {!isXS && <AssetItemButtonGroup name='Secret Transfer' isOwner={isOwner} item={item} transferModal={transferModal} />}
+      {!isXS && decimal == 0 && <AssetItemButtonGroup name='Parachain Transfer' isOwner={isOwner} item={item} transferModal={transferxModal} />}
     </AssetBlock>
   </>
 })

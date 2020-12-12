@@ -9,7 +9,7 @@ import { ss58ToHex, encryptObj } from '@phala/runtime/utils'
 import { toApi } from '@phala/runtime/models'
 import InputAmount, { BN_ZERO } from '@/components/InputAmount'
 
-const TransferXModal = ({ asset, bindings, setVisible }) => {
+const TransferXModal = ({ assetSymbol, asset, bindings, setVisible }) => {
   const { account, walletRuntime } = useStore()
   const { ecdhChannel } = walletRuntime
 
@@ -17,14 +17,26 @@ const TransferXModal = ({ asset, bindings, setVisible }) => {
 
   const toHexString = (byteArray) => {
     return Array.from(byteArray, function(byte) {
-      return ('0' + (byte & 0xFF).toString(16)).slice(-2);
+      return ('0' + (byte & 0xFF).toString(16)).slice(-2)
     }).join('')
   }
 
   const assetId = asset?.id
   console.log('assetXId:', assetId)
-  const assetSymbol = asset?.symbol || 'PHA'
-
+  let para_id = 0
+  let currency_id = []
+  if (assetId != undefined && assetId.length > 4) {
+    const assetIdHex = toHexString(assetId)
+    if (assetIdHex.startsWith('01')) { //Parachain
+      const para_id_in_hex = assetIdHex.slice(8, 10) + assetIdHex.slice(6, 8) + assetIdHex.slice(4, 6) + assetIdHex.slice(2, 4) //u32
+      para_id = parseInt(para_id_in_hex, 16)
+      let index = 5;
+      while (index < assetId.length) {
+        currency_id.push(assetId[index])
+        index ++
+      }
+    }
+  }
   const addressInput = useInput('')
   const valueInput = useInput('')
   const [isBusy, setIsBusy] = useState(false)
@@ -51,23 +63,6 @@ const TransferXModal = ({ asset, bindings, setVisible }) => {
     } catch (error) {
       setInnerDisabled(false)
       setAddressError(true)
-    }
-
-    let assetIdHex = undefined
-    let para_id = 0
-    let currency_id = []
-    if (assetId != undefined) {
-      assetIdHex = toHexString(assetId)
-      if (assetIdHex.startsWith('01')) { //Parachain
-        const para_id_in_hex = assetIdHex.slice(8, 10) + assetIdHex.slice(6, 8) + assetIdHex.slice(4, 6) + assetIdHex.slice(2, 4) //u32
-        para_id = parseInt(para_id_in_hex, 16)
-        let index = 10;
-        while (index < assetIdHex.length) {
-          let token = assetIdHex.slice(index, index+2)
-          currency_id.push(parseInt(token, 16))
-          index += 2
-        }
-      }
     }
 
     if (pubkeyHex) {

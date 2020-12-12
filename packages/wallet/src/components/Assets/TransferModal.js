@@ -9,7 +9,7 @@ import { ss58ToHex, encryptObj } from '@phala/runtime/utils'
 import { toApi } from '@phala/runtime/models'
 import InputAmount, { BN_ZERO } from '@/components/InputAmount'
 
-const TransferModal = ({ asset, bindings, setVisible }) => {
+const TransferModal = ({ assetSymbol, asset, bindings, setVisible }) => {
   const { account, walletRuntime } = useStore()
   const { ecdhChannel } = walletRuntime
 
@@ -22,7 +22,7 @@ const TransferModal = ({ asset, bindings, setVisible }) => {
   };
 
   const assetId = asset?.id
-  const assetSymbol = asset?.symbol || 'PHA'
+  //const assetSymbol = asset?.symbol || 'PHA'
 
   const addressInput = useInput('')
   const valueInput = useInput('')
