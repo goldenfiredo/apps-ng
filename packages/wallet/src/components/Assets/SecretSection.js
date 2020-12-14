@@ -106,7 +106,7 @@ const BalanceValue = styled(BalanceDisplay)`
   }
 `
 
-const Info = ({ symbol, balance, children }) => {
+const Info = ({ symbol, balance, decimal, children }) => {
   const balanceValue = useMemo(() => new BN(balance || "0"), [balance])
   const { t } = useTranslation()
 
@@ -118,7 +118,7 @@ const Info = ({ symbol, balance, children }) => {
     </InfoHead>
     <Balance>
       <BalanceHead>{t('balance')}</BalanceHead>
-      <BalanceValue withCurrency={false} value={balanceValue} labelPost={` ${symbol}`} params={'dummy'} />
+      <BalanceValue withCurrency={false} value={balanceValue} labelPost={` ${symbol}`} decimal={decimal} params={'dummy'} />
     </Balance>
     {children}
   </InfoWrapper>
@@ -371,8 +371,9 @@ const AssetItem = observer(({ itemIndex }) => {
   const balance = useMemo(() => new BN(item.balance || "0"), [item.balance])
   const ownerAddress = useMemo(() => hexToSs58('0x' + item.metadata.owner), [item.metadata.owner])
   const isOwner = useMemo(() => (ownerAddress === address), [ownerAddress,address])
+  const isCrosschain = useMemo(() => (item.metadata.id.length > 4), [item.metadata.id])
   const decimal = useMemo(() => item.metadata.decimal, [item.metadata.decimal])
-  const symbol = useMemo(() => decimal > 0 ? item.metadata.symbol : extractSymbolFromId(item.metadata.id), [item.metadata.id])
+  const symbol = useMemo(() => isCrosschain ? extractSymbolFromId(item.metadata.id) : item.metadata.symbol, [item.metadata.id])
   const transferModal = useModal()
   const transferxModal = useModal()
 
@@ -383,11 +384,11 @@ const AssetItem = observer(({ itemIndex }) => {
     <TransferXModal assetSymbol = {item.metadata?symbol:''} asset={item.metadata} {...transferxModal} />
     <AssetBlock>
       <LeftDecoration />
-      <Info balance={balance} symbol={symbol}>
+      <Info balance={balance} symbol={symbol} decimal={decimal==0 ? 12 : decimal}>
         {isXS && <AssetItemButtonGroup isOwner={isOwner} item={item} transferModal={transferModal} />}
       </Info>
       {!isXS && <AssetItemButtonGroup name='Secret Transfer' isOwner={isOwner} item={item} transferModal={transferModal} />}
-      {!isXS && decimal == 0 && <AssetItemButtonGroup name='Parachain Transfer' isOwner={isOwner} item={item} transferModal={transferxModal} />}
+      {!isXS && isCrosschain && <AssetItemButtonGroup name='Parachain Transfer' isOwner={isOwner} item={item} transferModal={transferxModal} />}
     </AssetBlock>
   </>
 })

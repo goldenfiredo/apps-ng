@@ -25,7 +25,8 @@ interface Props {
 const M_LENGTH = 6 + 1;
 const K_LENGTH = 3 + 1;
 
-function format (value: Compact<any> | BN | string, currency: string | null, withSi?: boolean, _isShort?: boolean, labelPost?: string): React.ReactNode {
+function format (value: Compact<any> | BN | string, currency: string | null, withSi?: boolean, _isShort?: boolean, labelPost?: string, decimal: number): React.ReactNode {
+  formatBalance.setDefaults({decimals: decimal, unit: labelPost})
   const [prefix, postfix] = formatBalance(value, { forceUnit: '-', withSi: false }).split('.');
   const isShort = _isShort || (withSi && prefix.length >= K_LENGTH);
 
@@ -37,7 +38,7 @@ function format (value: Compact<any> | BN | string, currency: string | null, wit
   return <>{`${prefix}${isShort ? '' : '.'}`}{!isShort && (<><span className='ui--FormatBalance-postfix'>{`000${postfix || ''}`.slice(-3)}</span></>)}{`${currency ? ` ${currency}` : ''}${labelPost || ''}`}</>;
 }
 
-function FormatBalance ({ children, className = '', isShort, label, labelPost, value, withCurrency = true, withSi }: Props): React.ReactElement<Props> {
+function FormatBalance ({ children, className = '', isShort, label, labelPost, value, decimal, withCurrency = true, withSi }: Props): React.ReactElement<Props> {
   const { t } = useTranslation();
   const [currency] = useState(withCurrency ? formatBalance.getDefaults().unit : null);
 
@@ -48,7 +49,7 @@ function FormatBalance ({ children, className = '', isShort, label, labelPost, v
         value
           ? value === 'all'
             ? t<string>('everything{{labelPost}}', { replace: { labelPost } })
-            : format(value, currency, withSi, isShort, labelPost)
+            : format(value, currency, withSi, isShort, labelPost, decimal)
           : `-${labelPost || ''}`
       }</span>{children}
     </div>
